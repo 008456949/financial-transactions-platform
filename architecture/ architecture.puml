@@ -1,0 +1,28 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+left to right direction
+title Data Lakehouse Architecture (Project-Specific)
+
+component "cards_data.csv\n(Project Data Source)" as CSV
+component "Ingestion Layer\n(Python / Pandas)\n- Custom script: ingest_cards.py" as Ingest
+component "Bronze Layer\nRaw Data\nS3 / Parquet\n- Partitioned by date" as Bronze
+component "Silver Layer\nCleaned & Validated\nSpark + Great Expectations\n- Schema: id, name, value\n- Checks: nulls < 5%, dedup on id" as Silver
+component "Gold Layer\nAnalytics Ready\nFact & Dimension Tables\n- Aggregations: sum(value) by name\n- KPIs: avg_value, count" as Gold
+
+component "Analytics\n(Athena / Redshift)\n- Queries for reports" as Analytics
+component "Dashboards\n(SQL / BI)\n- Tableau integration" as Dashboards
+component "Risk / ML\n- Model: Fraud Detection\n- Framework: Scikit-learn" as ML
+
+component "Airflow\nOrchestration\n- DAG: daily_ingest\n- Scheduling: 6 AM UTC\n- Retries: 3x" as Airflow
+
+CSV --> Ingest : upload
+Ingest --> Bronze : write parquet
+Bronze --> Silver : clean & validate
+Silver --> Gold : transform & aggregate
+Gold --> Analytics
+Gold --> Dashboards
+Gold --> ML
+
+Airflow --> Ingest : triggers
+@enduml
